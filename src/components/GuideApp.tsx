@@ -9,16 +9,14 @@ import {
   ExternalLink,
   GraduationCap,
   Layers,
-  NotebookPen,
   Search,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { decisionRows, officialSources, stages, type GuideStage, type GuideTool } from "@/data/guide";
 import { AiAskLayer } from "@/components/AiAskLayer";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
-import { NotesPanel } from "@/components/NotesPanel";
 import { TermText } from "@/components/TermText";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -26,28 +24,70 @@ function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function stageMatches(stage: GuideStage, query: string) {
-  if (!query) return true;
-  const haystack = normalize(
-    [
-      stage.index,
-      stage.title,
-      stage.subtitle,
-      stage.summary,
-      stage.tags.join(" "),
-      stage.knowledge.join(" "),
-      stage.pitfalls.join(" "),
-      stage.beginnerPath?.join(" ") || "",
-      stage.tools
-        .map((tool) => [tool.name, tool.category, tool.description, tool.bestFor, tool.steps.join(" ")].join(" "))
-        .join(" "),
-    ].join(" "),
-  );
-  return haystack.includes(query);
+type SearchMatch = {
+  id: string;
+  label: string;
+  text: string;
+  targetId: string;
+};
+
+type StageSearchResult = {
+  stage: GuideStage;
+  matches: SearchMatch[];
+};
+
+function textMatches(value: string, query: string) {
+  return normalize(value).includes(query);
+}
+
+function buildSearchResults(query: string): StageSearchResult[] {
+  if (!query) return [];
+
+  return stages
+    .map((stage) => {
+      const matches: SearchMatch[] = [];
+      const addMatch = (label: string, text: string, targetId: string) => {
+        if (!textMatches(text, query)) return;
+        matches.push({
+          id: `${targetId}-${matches.length}`,
+          label,
+          text,
+          targetId,
+        });
+      };
+
+      addMatch("章节", `${stage.index} ${stage.title}`, `${stage.id}-title`);
+      addMatch("导语", stage.subtitle, `${stage.id}-title`);
+      addMatch("结论", stage.summary, `${stage.id}-summary`);
+      stage.tags.forEach((tag) => addMatch("标签", tag, `${stage.id}-title`));
+      (stage.beginnerPath || []).forEach((item, index) => addMatch("3 步开始", item, `${stage.id}-beginner-${index}`));
+      stage.knowledge.forEach((item, index) => addMatch("关键检查点", item, `${stage.id}-knowledge-${index}`));
+      stage.tools.forEach((tool, index) => {
+        const targetId = `${stage.id}-tool-${index}`;
+        addMatch("工具", `${tool.category} ${tool.name}`, targetId);
+        addMatch("工具说明", tool.description, targetId);
+        addMatch("适合场景", tool.bestFor, targetId);
+        if (tool.difficulty) addMatch("难点", tool.difficulty, targetId);
+        tool.steps.forEach((step) => addMatch("操作步骤", step, targetId));
+      });
+      stage.pitfalls.forEach((pitfall, index) => addMatch("常见坑", pitfall, `${stage.id}-pitfall-${index}`));
+
+      return { stage, matches: matches.slice(0, 6) };
+    })
+    .filter((result) => result.matches.length > 0);
 }
 
 function openAi(text = "请基于当前外贸操作地图，帮我拆解下一步行动。") {
   window.dispatchEvent(new CustomEvent("sell-out-open-ai", { detail: { text } }));
+}
+
+function scrollPageTo(top: number) {
+  const targetTop = Math.max(0, top);
+  if (typeof window.scrollTo === "function") {
+    window.scrollTo({ top: targetTop, behavior: "smooth" });
+  }
+  document.documentElement.scrollTop = targetTop;
+  document.body.scrollTop = targetTop;
 }
 
 function scrollWorkspaceToTop() {
@@ -57,26 +97,74 @@ function scrollWorkspaceToTop() {
 
   const topbarHeight = topbar?.offsetHeight || 0;
   const targetTop = workspace.getBoundingClientRect().top + window.scrollY - topbarHeight - 12;
-  window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+  scrollPageTo(targetTop);
+}
+
+function scrollToSearchTarget(targetId: string) {
+  const target = document.getElementById(targetId);
+  const topbar = document.querySelector<HTMLElement>(".topbar");
+  if (!target) return;
+
+  const topbarHeight = topbar?.offsetHeight || 0;
+  const targetTop = target.getBoundingClientRect().top + window.scrollY - topbarHeight - 14;
+  scrollPageTo(targetTop);
+  target.classList.remove("search-jump-flash");
+  window.setTimeout(() => target.classList.add("search-jump-flash"), 0);
+  window.setTimeout(() => target.classList.remove("search-jump-flash"), 1800);
+}
+
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return text;
+  const normalizedText = text.toLowerCase();
+  const normalizedNeedle = query.toLowerCase();
+  const parts: ReactNode[] = [];
+  let cursor = 0;
+  let index = normalizedText.indexOf(normalizedNeedle);
+
+  while (index >= 0) {
+    if (index > cursor) parts.push(text.slice(cursor, index));
+    parts.push(<mark key={`${index}-${parts.length}`}>{text.slice(index, index + query.length)}</mark>);
+    cursor = index + query.length;
+    index = normalizedText.indexOf(normalizedNeedle, cursor);
+  }
+
+  if (cursor < text.length) parts.push(text.slice(cursor));
+  return parts;
 }
 
 export function GuideApp() {
   const [query, setQuery] = useState("");
   const [activeStageId, setActiveStageId] = useState(stages[0]?.id || "");
-  const [notesOpen, setNotesOpen] = useState(false);
   const [tutorialTool, setTutorialTool] = useState<GuideTool | null>(null);
   const [matrixOpen, setMatrixOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [mobileStageOpen, setMobileStageOpen] = useState(false);
+  const [pendingJumpId, setPendingJumpId] = useState("");
 
   const activeStage = stages.find((stage) => stage.id === activeStageId) || stages[0];
   const normalizedQuery = normalize(query);
-  const filteredStages = useMemo(() => stages.filter((stage) => stageMatches(stage, normalizedQuery)), [normalizedQuery]);
+  const searchResults = useMemo(() => buildSearchResults(normalizedQuery), [normalizedQuery]);
+
+  useEffect(() => {
+    if (normalizedQuery || !pendingJumpId) return;
+    const timer = window.setTimeout(() => {
+      scrollToSearchTarget(pendingJumpId);
+      setPendingJumpId("");
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [normalizedQuery, pendingJumpId, activeStageId]);
 
   function chooseStage(id: string) {
     setActiveStageId(id);
     setMobileStageOpen(false);
     scrollWorkspaceToTop();
+  }
+
+  function chooseSearchMatch(stageId: string, targetId: string) {
+    setActiveStageId(stageId);
+    setMobileStageOpen(false);
+    setPendingJumpId(targetId);
+    setQuery("");
   }
 
   return (
@@ -94,9 +182,6 @@ export function GuideApp() {
         <div className="top-actions">
           <button type="button" className="icon-action" onClick={() => openAi()} aria-label="打开 AI 咨询">
             <Bot size={18} />
-          </button>
-          <button type="button" className="icon-action" onClick={() => setNotesOpen(true)} aria-label="打开知识库笔记">
-            <NotebookPen size={18} />
           </button>
         </div>
       </header>
@@ -128,7 +213,7 @@ export function GuideApp() {
 
         <section className="workspace-main" id="top">
           {normalizedQuery ? (
-            <SearchResults stages={filteredStages} onChooseStage={chooseStage} />
+            <SearchResults results={searchResults} query={query} onChooseMatch={chooseSearchMatch} />
           ) : (
             <>
               <StageWorkspace stage={activeStage} onOpenTutorial={setTutorialTool} />
@@ -143,7 +228,6 @@ export function GuideApp() {
             </>
           )}
         </section>
-
       </div>
 
       <nav className="mobile-bottom-nav" aria-label="移动端快捷导航">
@@ -164,22 +248,26 @@ export function GuideApp() {
       <button className="floating-ai" type="button" onClick={() => openAi(activeStage.summary)} aria-label="打开 AI 咨询" data-tooltip="有问题直接问，划线可提问">
         <Bot size={20} />
       </button>
-      <button className="floating-notes" type="button" onClick={() => setNotesOpen(true)} aria-label="打开悬浮知识库笔记">
-        <NotebookPen size={20} />
-      </button>
       <TutorialDialog tool={tutorialTool} onClose={() => setTutorialTool(null)} />
-      <NotesPanel open={notesOpen} onClose={() => setNotesOpen(false)} />
       <AiAskLayer />
     </main>
     </TooltipProvider>
   );
 }
 
-function SearchResults({ stages: results, onChooseStage }: { stages: GuideStage[]; onChooseStage: (id: string) => void }) {
+function SearchResults({
+  results,
+  query,
+  onChooseMatch,
+}: {
+  results: StageSearchResult[];
+  query: string;
+  onChooseMatch: (stageId: string, targetId: string) => void;
+}) {
   return (
     <section className="search-results" aria-label="搜索结果">
       <div className="section-heading">
-        <h2>匹配章节</h2>
+        <h2>匹配内容</h2>
       </div>
       {results.length === 0 ? (
         <div className="empty-state">
@@ -188,12 +276,23 @@ function SearchResults({ stages: results, onChooseStage }: { stages: GuideStage[
         </div>
       ) : (
         <div className="result-grid">
-          {results.map((stage) => (
-            <button key={stage.id} type="button" className="result-card" onClick={() => onChooseStage(stage.id)}>
-              <span>{stage.index}</span>
-              <strong>{stage.title}</strong>
-              <p>{stage.summary}</p>
-            </button>
+          {results.map((result) => (
+            <article key={result.stage.id} className="result-card">
+              <span>{result.stage.index}</span>
+              <strong>
+                <HighlightText text={result.stage.title} query={query} />
+              </strong>
+              <div className="result-match-list">
+                {result.matches.map((match) => (
+                  <button key={match.id} type="button" onClick={() => onChooseMatch(result.stage.id, match.targetId)}>
+                    <small>{match.label}</small>
+                    <p>
+                      <HighlightText text={match.text} query={query} />
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </article>
           ))}
         </div>
       )}
@@ -225,20 +324,20 @@ function StageWorkspace({
         </button>
       </div>
 
-      <article className="stage-summary-panel">
+      <article className="stage-summary-panel" id={`${stage.id}-summary`}>
         <strong>结论</strong>
         <p><TermText>{stage.summary}</TermText></p>
       </article>
 
-      <div className="stage-detail-grid">
+      <div className="stage-detail-grid" id="quick-start">
         <article className="action-panel">
           <div className="card-heading">
             <GraduationCap size={18} />
             <h3>3 步开始</h3>
           </div>
           <ol>
-            {firstSteps.map((item) => (
-              <li key={item}><TermText>{item}</TermText></li>
+            {firstSteps.map((item, index) => (
+              <li key={item} id={`${stage.id}-beginner-${index}`}><TermText>{item}</TermText></li>
             ))}
           </ol>
         </article>
@@ -249,8 +348,8 @@ function StageWorkspace({
             <h3>关键检查点</h3>
           </div>
           <ul>
-            {checkPoints.map((item) => (
-              <li key={item}><TermText>{item}</TermText></li>
+            {checkPoints.map((item, index) => (
+              <li key={item} id={`${stage.id}-knowledge-${index}`}><TermText>{item}</TermText></li>
             ))}
           </ul>
         </article>
@@ -264,25 +363,25 @@ function StageWorkspace({
         <MermaidDiagram chart={stage.diagram} />
       </article>
 
-      <section className="tool-section">
+      <section className="tool-section" id="tool-list">
         <div className="compact-section-heading">
           <h3>工具与入口</h3>
         </div>
         <div className="tool-list">
-          {stage.tools.map((tool) => (
-            <ToolCard key={`${stage.id}-${tool.name}`} tool={tool} onOpenTutorial={onOpenTutorial} />
+          {stage.tools.map((tool, index) => (
+            <ToolCard key={`${stage.id}-${tool.name}`} id={`${stage.id}-tool-${index}`} tool={tool} onOpenTutorial={onOpenTutorial} />
           ))}
         </div>
       </section>
 
-      <article className="pitfall-card">
+      <article className="pitfall-card" id="risk-list">
         <div className="card-heading">
           <AlertTriangle size={18} />
           <h3>常见坑</h3>
         </div>
         <div>
-          {stage.pitfalls.map((pitfall) => (
-            <span key={pitfall}><TermText>{pitfall}</TermText></span>
+          {stage.pitfalls.map((pitfall, index) => (
+            <span key={pitfall} id={`${stage.id}-pitfall-${index}`}><TermText>{pitfall}</TermText></span>
           ))}
         </div>
       </article>
@@ -290,9 +389,9 @@ function StageWorkspace({
   );
 }
 
-function ToolCard({ tool, onOpenTutorial }: { tool: GuideTool; onOpenTutorial: (tool: GuideTool) => void }) {
+function ToolCard({ id, tool, onOpenTutorial }: { id: string; tool: GuideTool; onOpenTutorial: (tool: GuideTool) => void }) {
   return (
-    <article className="tool-card">
+    <article className="tool-card" id={id}>
       <div className="tool-top">
         <div>
           <span><TermText>{tool.category}</TermText></span>

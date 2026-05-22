@@ -1,7 +1,9 @@
 "use client";
 
-import { ExternalLink, KeyRound, Loader2, Menu, MessageCircle, Send, Save, Trash2, X } from "lucide-react";
+import { ExternalLink, KeyRound, Loader2, MessageCircle, Send, Save, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type AiConfig = {
   apiKey: string;
@@ -67,6 +69,25 @@ function buildResponsesUrl(baseUrl: string) {
   if (clean.endsWith("/responses")) return clean;
   if (clean.endsWith("/v1")) return `${clean}/responses`;
   return `${clean}/v1/responses`;
+}
+
+function AiMarkdown({ children }: { children: string }) {
+  return (
+    <div className="ai-markdown">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ children: linkChildren, ...props }) => (
+            <a {...props} target="_blank" rel="noreferrer">
+              {linkChildren}
+            </a>
+          ),
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
 }
 
 function extractResponseText(data: unknown): string {
@@ -144,7 +165,7 @@ async function requestAi(config: AiConfig, selectedText: string, question: strin
 
 function shouldIgnoreSelectionTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
-  return Boolean(target.closest("input, textarea, button, a, .notes-overlay, .tutorial-overlay, .ai-dialog, .ai-highlight-popover"));
+  return Boolean(target.closest("input, textarea, button, a, .tutorial-overlay, .ai-dialog, .ai-highlight-popover"));
 }
 
 function shouldSkipTextNode(node: Node) {
@@ -152,7 +173,7 @@ function shouldSkipTextNode(node: Node) {
   if (!parent || !node.textContent?.trim()) return true;
   return Boolean(
     parent.closest(
-      "script, style, textarea, input, button, a, svg, pre, code, .notes-overlay, .tutorial-overlay, .ai-dialog, .ai-selection-toolbar, .ai-highlight-popover, [data-ai-highlight]",
+      "script, style, textarea, input, button, a, svg, pre, code, .tutorial-overlay, .ai-dialog, .ai-selection-toolbar, .ai-highlight-popover, [data-ai-highlight]",
     ),
   );
 }
@@ -207,6 +228,7 @@ export function AiAskLayer() {
   const [bubble, setBubble] = useState<SelectionBubble | null>(null);
   const [selectedText, setSelectedText] = useState("");
   const [question, setQuestion] = useState("");
+  const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
@@ -331,6 +353,7 @@ export function AiAskLayer() {
   const openDialog = useCallback((text: string) => {
     setSelectedText(text);
     setQuestion("");
+    setSubmittedQuestion("");
     setAnswer("");
     setStatus("");
     setDialogOpen(true);
@@ -384,32 +407,27 @@ export function AiAskLayer() {
       return;
     }
 
+    const nextQuestion = question.trim();
+    setSubmittedQuestion(nextQuestion);
+    setQuestion("");
     setLoading(true);
-    setStatus("正在请求 AI...");
+    setStatus("");
     setAnswer("");
     saveJson(CONFIG_KEY, config);
 
     try {
-      const nextAnswer = await requestAi(config, selectedText, question.trim());
+      const nextAnswer = await requestAi(config, selectedText, nextQuestion);
       const record: AiRecord = {
         id: makeId(),
         text: selectedText,
-        question: question.trim(),
+        question: nextQuestion,
         answer: nextAnswer,
         model: config.model.trim() || DEFAULT_CONFIG.model,
         createdAt: new Date().toISOString(),
       };
       persistRecords([record, ...records]);
       setAnswer(nextAnswer);
-      setStatus("已保存到本地问答记录，并写入知识库笔记。");
-      window.dispatchEvent(
-        new CustomEvent("sell-out-add-note", {
-          detail: {
-            content: `AI 问答\n\n选中：${record.text}\n\n问题：${record.question}\n\n答案：${record.answer}`,
-            tags: ["AI问答", "划线"],
-          },
-        }),
-      );
+      setStatus("已保存到本地问答记录。");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "AI 请求失败。");
     } finally {
@@ -459,14 +477,55 @@ export function AiAskLayer() {
 
       {dialogOpen ? (
         <div className="ai-drawer-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setDialogOpen(false)}>
+          {historyOpen ? (
+            <aside className="ai-history-sidebar" aria-label="历史对话列表">
+              <header className="ai-history-head">
+                <strong>历史对话</strong>
+                <button type="button" onClick={() => setHistoryOpen(false)} aria-label="关闭历史对话">
+                  <X size={16} />
+                </button>
+              </header>
+              {records.length ? (
+                <div className="ai-record-list">
+                  {records.map((record) => (
+                    <article key={record.id} className="ai-record-item">
+                      <button
+                        type="button"
+                        className="ai-record-open"
+                        onClick={() => {
+                          setDetailRecord(record);
+                          setHistoryOpen(false);
+                        }}
+                      >
+                        <span>{record.question}</span>
+                        <time dateTime={record.createdAt}>{new Date(record.createdAt).toLocaleString("zh-CN")}</time>
+                      </button>
+                      <button type="button" className="ai-record-delete" onClick={() => deleteRecord(record.id)} aria-label="删除问答记录">
+                        <Trash2 size={15} />
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="ai-popover-text">还没有历史对话。</p>
+              )}
+            </aside>
+          ) : null}
           <aside className="ai-drawer" aria-label="AI 问答">
             <div className="ai-dialog-head">
               <div className="ai-title-group">
-                <button type="button" onClick={() => setHistoryOpen((value) => !value)} aria-label="打开历史对话" title="历史对话">
-                  <Menu size={20} />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHistoryOpen((value) => !value);
+                    setConfigOpen(false);
+                  }}
+                  aria-label="打开历史对话"
+                  title="历史对话"
+                >
+                  <MessageCircle size={20} />
                 </button>
                 <header>
-                  <span>页面助手</span>
                   <h2>AI 咨询</h2>
                 </header>
               </div>
@@ -487,41 +546,6 @@ export function AiAskLayer() {
                 </button>
               </div>
             </div>
-
-            {historyOpen ? (
-              <aside className="ai-history-menu" aria-label="历史对话列表">
-                <header className="ai-history-head">
-                  <strong>历史对话</strong>
-                  <button type="button" onClick={() => setHistoryOpen(false)} aria-label="关闭历史对话">
-                    <X size={16} />
-                  </button>
-                </header>
-                {records.length ? (
-                  <div className="ai-record-list">
-                    {records.map((record) => (
-                      <article key={record.id} className="ai-record-item">
-                        <button
-                          type="button"
-                          className="ai-record-open"
-                          onClick={() => {
-                            setDetailRecord(record);
-                            setHistoryOpen(false);
-                          }}
-                        >
-                          <span>{record.question}</span>
-                          <time dateTime={record.createdAt}>{new Date(record.createdAt).toLocaleString("zh-CN")}</time>
-                        </button>
-                        <button type="button" className="ai-record-delete" onClick={() => deleteRecord(record.id)} aria-label="删除问答记录">
-                          <Trash2 size={15} />
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="ai-popover-text">还没有历史对话。</p>
-                )}
-              </aside>
-            ) : null}
 
             {configOpen ? (
               <div className="ai-config-panel">
@@ -573,26 +597,17 @@ export function AiAskLayer() {
                 <p>{selectedText}</p>
               </article>
 
-              {question ? (
+              {submittedQuestion ? (
                 <article className="ai-message ai-message-user">
                   <span>你</span>
-                  <p>{question}</p>
-                </article>
-              ) : null}
-
-              {loading ? (
-                <article className="ai-message ai-message-assistant">
-                  <span>AI</span>
-                  <p>
-                    <Loader2 size={16} className="ai-spin" /> 正在整理回答…
-                  </p>
+                  <p>{submittedQuestion}</p>
                 </article>
               ) : null}
 
               {answer ? (
                 <article className="ai-message ai-message-assistant">
                   <span>AI</span>
-                  <p>{answer}</p>
+                  <AiMarkdown>{answer}</AiMarkdown>
                 </article>
               ) : null}
 
@@ -600,16 +615,18 @@ export function AiAskLayer() {
             </div>
 
             <div className="ai-composer">
-              <textarea
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                rows={3}
-                aria-label="输入问题"
-                placeholder="例如：这一步小白怎么做？风险是什么？给我一个执行清单。"
-              />
-              <button type="button" className="ai-send-button" onClick={askAi} disabled={loading} aria-label="发送 AI 咨询">
-                {loading ? <Loader2 size={17} className="ai-spin" /> : <Send size={17} />}
-              </button>
+              <div className="ai-input-group">
+                <textarea
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  rows={2}
+                  aria-label="输入问题"
+                  placeholder="例如：这一步小白怎么做？风险是什么？给我一个执行清单。"
+                />
+                <button type="button" className="ai-send-button" onClick={askAi} disabled={loading} aria-label="发送 AI 咨询">
+                  {loading ? <Loader2 size={17} className="ai-spin" /> : <Send size={17} />}
+                </button>
+              </div>
             </div>
           </aside>
         </div>
@@ -638,7 +655,7 @@ export function AiAskLayer() {
             </div>
             <article className="ai-answer">
               <h3>{detailRecord.question}</h3>
-              <p>{detailRecord.answer}</p>
+              <AiMarkdown>{detailRecord.answer}</AiMarkdown>
             </article>
             <a className="ai-doc-link" href="https://platform.openai.com/docs/api-reference/responses/create" target="_blank" rel="noreferrer">
               Responses API 参考
