@@ -90,7 +90,7 @@ export const trendSignals = [
   "买家前期研究更自主：官网、社媒、行业内容、AI 搜索摘要和同行推荐会先于销售接触发生。",
   "平台店仍有价值，但更像获客渠道之一，不应成为唯一客户资产来源。",
   "LinkedIn、Facebook、WhatsApp 和邮件组合触达，比单一开发信更适合 2026 年的 B2B 跟进。",
-  "视频验厂、生产过程、包装发货、认证文件和真实案例，是降低陌生买家风险感的基础资产。",
+  "社媒主页、真人出镜、产品短视频、视频验厂、生产过程、包装发货、认证文件和真实案例，是降低陌生买家风险感的基础资产。",
   "AI 工具适合提效：客户研究、邮件初稿、多语种改写、报价说明、FAQ 和售后回复，但关键承诺必须人工确认。",
 ];
 
@@ -107,7 +107,7 @@ export const stages: GuideStage[] = [
     diagram: `flowchart LR
   A[定义目标买家 ICP] --> B[平台店承接高意图询盘]
   A --> C[Google/LinkedIn 主动找客户]
-  A --> D[Facebook/展会社媒建立信任]
+  A --> D[社媒视频/展会内容建立信任]
   B --> E[CRM 统一跟进]
   C --> E
   D --> E
@@ -120,12 +120,13 @@ export const stages: GuideStage[] = [
     knowledge: [
       "先定义 ICP：国家、行业、采购角色、采购量、价格带、认证要求和痛点。",
       "每个渠道只承担一个主目标：平台拿询盘，LinkedIn 找决策人，官网做信任，WhatsApp 做快速沟通。",
-      "把产品资料、工厂视频、证书、案例、FAQ 做成可复用素材库。",
+      "把产品资料、工厂视频、社媒短视频、证书、案例、FAQ 做成可复用素材库。",
+      "社媒内容不是只为涨粉，而是在客户搜索公司名、负责人名和产品关键词时，提供可被验证的真人、场景和交付证据。",
       "用 CRM 或表格记录来源、联系人、需求、下一步动作和跟进日期。",
     ],
     beginnerPath: [
       "第 1 天只做一件事：写出目标买家画像，不急着注册所有平台。",
-      "第 2-3 天准备可信资料包：营业执照英文信息、公司介绍、产品规格、证书、工厂照片和 30 秒视频。",
+      "第 2-3 天准备可信资料包：营业执照英文信息、公司介绍、产品规格、证书、工厂照片、真人介绍和 30 秒产品视频。",
       "第 4-7 天选两个主渠道测试：一个承接型渠道，比如平台店或官网；一个主动型渠道，比如 LinkedIn 或 Google 搜索。",
       "每周复盘一次有效线索，不用单纯追求浏览量或粉丝数。",
     ],
@@ -290,27 +291,35 @@ export const stages: GuideStage[] = [
     id: "prospect",
     index: "03",
     title: "找客户",
-    subtitle: "先找对公司，再找对人，最后找对触达理由。",
+    subtitle: "先找对公司，再补信任证据，最后找对触达理由。",
     summary:
-      "找客户不是买一堆邮箱，而是建立目标客户清单。先按国家和行业筛公司，再找采购、产品、运营、老板等角色，最后用业务场景写触达理由。",
-    tags: ["客户开发", "Google", "LinkedIn", "海关数据", "名单"],
+      "找客户不是买一堆邮箱，而是建立目标客户清单和可信触达资产。先按国家和行业筛公司，再找采购、产品、运营、老板等角色，同时准备社媒主页、产品视频和案例证据，最后用业务场景写触达理由。",
+    tags: ["客户开发", "Google", "LinkedIn", "Facebook", "TikTok", "WhatsApp", "短视频", "名单"],
     diagramTitle: "客户清单构建流程",
     diagram: `flowchart LR
   A[选择目标国家/行业] --> B[搜索进口商/品牌/渠道商]
   B --> C[验证公司真实性]
   C --> D[找到关键联系人]
-  D --> E[补全邮箱/LinkedIn/WhatsApp]
-  E --> F[写触达理由]
-  F --> G[导入 CRM 并安排跟进]`,
+  D --> E[补全邮箱/LinkedIn/Facebook/TikTok/WhatsApp]
+  E --> F[核验社媒活跃度和联系方式]
+  F --> H[补充产品视频/案例/可信资料]
+  H --> I[写触达理由]
+  I --> G[导入 CRM 并安排跟进]`,
     knowledge: [
       "用关键词组合搜索：product + importer/distributor/wholesaler/private label/OEM。",
-      "验证公司：官网、LinkedIn 员工、地址、社媒、展会记录、进口记录和评价。",
+      "社媒找客户：用 Facebook Page/Groups、Instagram 标签、TikTok 关键词和 LinkedIn 公司页交叉寻找品牌、批发商、门店和区域代理。",
+      "验证公司：官网、LinkedIn 员工、地址、Facebook/Instagram/TikTok 活跃度、展会记录、进口记录和评价。",
       "联系人优先级：采购、品类经理、产品经理、老板、运营负责人。",
-      "每条线索至少记录国家、公司类型、产品匹配度、联系人、触达渠道和下一步。",
+      "主动开发前先准备可被对方快速判断的信任基石：公司主页、负责人或业务员真人介绍、产品使用短视频、生产/包装/发货片段、认证和客户案例。",
+      "社媒视频要回答买家最先怀疑的问题：你是谁、产品长什么样、怎么生产和质检、包装交付是否稳定、有没有真实应用场景。",
+      "WhatsApp 不适合作为陌生客户唯一来源，但适合记录已公开号码、官网按钮、Facebook Page 联系方式和客户同意后的快速沟通入口。",
+      "每条线索至少记录国家、公司类型、产品匹配度、联系人、触达渠道、社媒主页、WhatsApp/邮箱和下一步。",
     ],
     beginnerPath: [
       "从一个国家和一个细分品类开始，避免一上来搜全球客户。",
       "先用 Google 找 50 家公司，再用 LinkedIn 验证公司员工和采购相关岗位。",
+      "再用 Facebook、Instagram、TikTok 搜品牌名、品类词、地区词和 hashtag，补充社媒主页、活跃内容和公开联系方式。",
+      "在正式触达前，至少准备 3 条可复用短视频：产品 30 秒介绍、生产/质检过程、包装/发货或应用场景。",
       "每家公司只记录有证据的字段，不确定的信息标记待核验。",
       "第一批名单宁愿少而准，先跑通触达和跟进节奏。",
     ],
@@ -329,6 +338,63 @@ export const stages: GuideStage[] = [
             url: "https://support.google.com/websearch/answer/2466433",
             kind: "官方",
             note: "学会引号、减号、site: 和 OR，可以大幅减少无关结果。",
+          },
+        ],
+      },
+      {
+        name: "Facebook / Instagram / TikTok 搜索",
+        category: "社媒找客户",
+        description: "通过主页、群组、标签、短视频和评论区发现品牌、门店、批发商、代理商和活跃采购线索，同时反向检查自己是否有足够可信的社媒资产承接对方回访。",
+        bestFor: "消费品、礼品、服饰、美妆、家居、宠物、轻定制、工具配件和适合视觉展示的产品。",
+        difficulty: "中等偏高：需要稳定合规访问环境、账号可信度、持续内容和人工判断，不能只看粉丝数。",
+        steps: [
+          "准备英文品类词和目标国家词",
+          "搜索 Facebook Page/Groups 和 Instagram/TikTok 标签",
+          "筛选真实公司主页和近期内容",
+          "记录官网、邮箱、WhatsApp、Messenger 或表单入口",
+          "整理可发送的产品短视频、工厂片段和案例链接",
+          "回到官网/LinkedIn/地图二次验证",
+        ],
+        links: [
+          { label: "Facebook", url: "https://www.facebook.com/" },
+          { label: "Instagram", url: "https://www.instagram.com/" },
+          { label: "TikTok", url: "https://www.tiktok.com/" },
+        ],
+        tutorials: [
+          {
+            label: "Meta Business Help",
+            url: "https://www.facebook.com/business/help",
+            kind: "官方",
+            note: "涉及 Page、Business Portfolio、消息和广告资产时优先核对官方帮助。",
+          },
+          {
+            label: "TikTok Business Help",
+            url: "https://businesshelp.tiktok.com/",
+            kind: "官方",
+            note: "适合核验 Business Center、广告账户、素材和账号审核要求。",
+          },
+        ],
+      },
+      {
+        name: "WhatsApp Business",
+        category: "客户联系方式",
+        description: "记录客户公开 WhatsApp 入口，并在对方同意后用于快速确认需求、样品、报价和会议。",
+        bestFor: "已经有官网、社媒主页、展会名片或邮件往来证据的客户跟进。",
+        difficulty: "中等：未经许可群发容易被举报，号码来源和沟通同意要可追溯。",
+        steps: ["从官网或社媒记录公开号码", "确认国家区号和联系人", "先用邮件/表单建立上下文", "征得同意后添加 WhatsApp", "把聊天要点同步到 CRM"],
+        links: [{ label: "WhatsApp Business", url: "https://www.whatsapp.com/business/" }],
+        tutorials: [
+          {
+            label: "WhatsApp Business 官方入口",
+            url: "https://www.whatsapp.com/business/",
+            kind: "官方",
+            note: "适合管理企业资料、商品目录、快捷回复和标签。",
+          },
+          {
+            label: "WhatsApp 帮助中心",
+            url: "https://faq.whatsapp.com/",
+            kind: "核验",
+            note: "账号、隐私、群发和封号相关规则以官方帮助为准。",
           },
         ],
       },
@@ -370,6 +436,9 @@ export const stages: GuideStage[] = [
     pitfalls: [
       "不要群发无差别开发信，会伤害域名信誉并降低回复率。",
       "不要只找 info@ 邮箱，尽量找到具体岗位或具体姓名。",
+      "不要把 Facebook/TikTok/Instagram 的粉丝数当采购意向，要看公司真实性、近期内容、官网和公开联系方式。",
+      "不要只在社媒发广告海报，缺少真人、产品细节、生产过程和交付证据时，客户很难建立基础信任。",
+      "不要用 WhatsApp 冷启动轰炸陌生客户，先建立上下文并尊重对方同意。",
       "不要忽略小进口商，他们可能比大品牌更容易启动合作。",
     ],
   },
@@ -379,8 +448,8 @@ export const stages: GuideStage[] = [
     title: "接触客户",
     subtitle: "第一次触达的目标不是成交，而是获得一个小回应。",
     summary:
-      "触达要短、具体、有理由。用邮件负责正式资料，用 LinkedIn 和 Facebook 建立人感，用 WhatsApp 做已建立联系后的快速沟通。",
-    tags: ["开发信", "LinkedIn", "Facebook", "WhatsApp", "触达"],
+      "触达要短、具体、有理由。用邮件负责正式资料，用 LinkedIn、Facebook、Instagram 和 TikTok 建立人感与信任证据，用 WhatsApp 做已建立联系后的快速沟通。",
+    tags: ["开发信", "LinkedIn", "Facebook", "TikTok", "短视频", "WhatsApp", "触达"],
     diagramTitle: "多触点接触时序",
     diagram: `sequenceDiagram
   participant S as 外贸销售
@@ -399,14 +468,15 @@ export const stages: GuideStage[] = [
       "首触达要围绕客户业务写：目标国家、销售渠道、终端用户、替代供应商、认证要求和可能的上架/交付节点。",
       "解决疑虑要从实际产品和事实出发：规格、测试、认证、产能、案例、包装、交期和售后流程，而不是空泛保证。",
       "LinkedIn 不要一上来长篇推销，先用资料和内容建立可信度。",
-      "Facebook Page 要补齐公司信息、产品相册、工厂视频、联系方式和 Messenger 自动回复。",
+      "社媒视频适合放在第二触点或资料包里：产品演示、真人介绍、工厂/质检/包装/装柜片段，比单纯参数表更容易建立基础信任。",
+      "Facebook Page、Instagram 和 TikTok 要补齐公司信息、产品相册、短视频、联系方式和消息入口。",
       "WhatsApp 适合跟进已同意沟通的客户，不适合冷启动轰炸。",
     ],
     beginnerPath: [
       "先用公司域名邮箱发送 20-50 封高质量开发信，不要买名单群发。",
       "每封开发信先写一个客户场景假设：他卖给谁、担心什么、为什么现在可能需要这个产品。",
       "准备 3 类可复制话术：首触达、跟进提醒、疑虑回应；每类都要带一个事实证据位。",
-      "Facebook/Instagram 先做主页可信度：公司资料、真实照片、联系方式、案例和短视频。",
+      "Facebook/Instagram/TikTok 先做主页可信度：公司资料、真实照片、联系方式、案例、真人介绍和短视频。",
       "国内使用 Meta 和 TikTok 相关产品常见难点是网络可达性、账号风控和企业资料审核，务必准备稳定合规的访问环境和一致的公司资料。",
       "WhatsApp 只跟进已经建立关系的人，冷启动轰炸容易被举报或封号。",
     ],
@@ -415,9 +485,9 @@ export const stages: GuideStage[] = [
         name: "Meta Business Suite",
         category: "Facebook/Instagram",
         description: "管理 Facebook Page、Instagram、消息、内容和广告资产。",
-        bestFor: "做公司社媒信任背书和客户消息入口。",
+        bestFor: "做公司社媒信任背书、短视频内容分发和客户消息入口。",
         difficulty: "高：国内访问、个人账号风控、Business Portfolio、Page 权限和广告资产审核都可能卡住。",
-        steps: ["创建或登录 Meta 账号", "创建 Business Portfolio", "创建 Facebook Page", "补齐公司资料和联系方式", "发布案例和产品内容"],
+        steps: ["创建或登录 Meta 账号", "创建 Business Portfolio", "创建 Facebook Page", "补齐公司资料和联系方式", "发布真人介绍、案例和产品短视频"],
         links: [
           { label: "Meta Business", url: "https://business.facebook.com/" },
           { label: "Meta Help Center", url: "https://www.facebook.com/business/help" },
@@ -446,10 +516,10 @@ export const stages: GuideStage[] = [
       {
         name: "TikTok for Business",
         category: "短视频/广告",
-        description: "用于 TikTok 广告账户、Business Center、素材和像素管理。",
-        bestFor: "视觉强、适合短视频种草的消费品、轻定制和区域代理招募。",
+        description: "用于 TikTok 广告账户、Business Center、素材和像素管理，也可沉淀产品演示、工厂过程和真实应用场景。",
+        bestFor: "视觉强、适合短视频展示、轻定制和区域代理招募的产品。",
         difficulty: "高：TikTok 在国内常见访问门槛，普通代理/VPN 可能打不开或不稳定；广告账户还需要业务资料、账单信息和审核。",
-        steps: ["先确认目标市场是否适合 TikTok", "准备企业资料和官网/落地页", "创建 Business Center 或 Ads Manager", "完成账单和审核", "小预算测试素材"],
+        steps: ["先确认目标市场是否适合 TikTok", "准备企业资料和官网/落地页", "拍摄产品演示和生产过程短视频", "创建 Business Center 或 Ads Manager", "完成账单和审核", "小预算测试素材"],
         links: [
           { label: "TikTok Business", url: "https://www.tiktok.com/business/" },
           { label: "Business Help Center", url: "https://businesshelp.tiktok.com/" },
