@@ -293,24 +293,28 @@ export const stages: GuideStage[] = [
     subtitle: "先找对公司，再找对人，最后找对触达理由。",
     summary:
       "找客户不是买一堆邮箱，而是建立目标客户清单。先按国家和行业筛公司，再找采购、产品、运营、老板等角色，最后用业务场景写触达理由。",
-    tags: ["客户开发", "Google", "LinkedIn", "海关数据", "名单"],
+    tags: ["客户开发", "Google", "LinkedIn", "Facebook", "TikTok", "WhatsApp", "名单"],
     diagramTitle: "客户清单构建流程",
     diagram: `flowchart LR
   A[选择目标国家/行业] --> B[搜索进口商/品牌/渠道商]
   B --> C[验证公司真实性]
   C --> D[找到关键联系人]
-  D --> E[补全邮箱/LinkedIn/WhatsApp]
-  E --> F[写触达理由]
-  F --> G[导入 CRM 并安排跟进]`,
+  D --> E[补全邮箱/LinkedIn/Facebook/TikTok/WhatsApp]
+  E --> F[核验社媒活跃度和联系方式]
+  F --> H[写触达理由]
+  H --> G[导入 CRM 并安排跟进]`,
     knowledge: [
       "用关键词组合搜索：product + importer/distributor/wholesaler/private label/OEM。",
-      "验证公司：官网、LinkedIn 员工、地址、社媒、展会记录、进口记录和评价。",
+      "社媒找客户：用 Facebook Page/Groups、Instagram 标签、TikTok 关键词和 LinkedIn 公司页交叉寻找品牌、批发商、门店和区域代理。",
+      "验证公司：官网、LinkedIn 员工、地址、Facebook/Instagram/TikTok 活跃度、展会记录、进口记录和评价。",
       "联系人优先级：采购、品类经理、产品经理、老板、运营负责人。",
-      "每条线索至少记录国家、公司类型、产品匹配度、联系人、触达渠道和下一步。",
+      "WhatsApp 不适合作为陌生客户唯一来源，但适合记录已公开号码、官网按钮、Facebook Page 联系方式和客户同意后的快速沟通入口。",
+      "每条线索至少记录国家、公司类型、产品匹配度、联系人、触达渠道、社媒主页、WhatsApp/邮箱和下一步。",
     ],
     beginnerPath: [
       "从一个国家和一个细分品类开始，避免一上来搜全球客户。",
       "先用 Google 找 50 家公司，再用 LinkedIn 验证公司员工和采购相关岗位。",
+      "再用 Facebook、Instagram、TikTok 搜品牌名、品类词、地区词和 hashtag，补充社媒主页、活跃内容和公开联系方式。",
       "每家公司只记录有证据的字段，不确定的信息标记待核验。",
       "第一批名单宁愿少而准，先跑通触达和跟进节奏。",
     ],
@@ -329,6 +333,62 @@ export const stages: GuideStage[] = [
             url: "https://support.google.com/websearch/answer/2466433",
             kind: "官方",
             note: "学会引号、减号、site: 和 OR，可以大幅减少无关结果。",
+          },
+        ],
+      },
+      {
+        name: "Facebook / Instagram / TikTok 搜索",
+        category: "社媒找客户",
+        description: "通过主页、群组、标签、短视频和评论区发现品牌、门店、批发商、代理商和活跃采购线索。",
+        bestFor: "消费品、礼品、服饰、美妆、家居、宠物、轻定制和适合视觉展示的产品。",
+        difficulty: "中等偏高：需要稳定合规访问环境、账号可信度和人工判断，不能只看粉丝数。",
+        steps: [
+          "准备英文品类词和目标国家词",
+          "搜索 Facebook Page/Groups 和 Instagram/TikTok 标签",
+          "筛选真实公司主页和近期内容",
+          "记录官网、邮箱、WhatsApp、Messenger 或表单入口",
+          "回到官网/LinkedIn/地图二次验证",
+        ],
+        links: [
+          { label: "Facebook", url: "https://www.facebook.com/" },
+          { label: "Instagram", url: "https://www.instagram.com/" },
+          { label: "TikTok", url: "https://www.tiktok.com/" },
+        ],
+        tutorials: [
+          {
+            label: "Meta Business Help",
+            url: "https://www.facebook.com/business/help",
+            kind: "官方",
+            note: "涉及 Page、Business Portfolio、消息和广告资产时优先核对官方帮助。",
+          },
+          {
+            label: "TikTok Business Help",
+            url: "https://businesshelp.tiktok.com/",
+            kind: "官方",
+            note: "适合核验 Business Center、广告账户、素材和账号审核要求。",
+          },
+        ],
+      },
+      {
+        name: "WhatsApp Business",
+        category: "客户联系方式",
+        description: "记录客户公开 WhatsApp 入口，并在对方同意后用于快速确认需求、样品、报价和会议。",
+        bestFor: "已经有官网、社媒主页、展会名片或邮件往来证据的客户跟进。",
+        difficulty: "中等：未经许可群发容易被举报，号码来源和沟通同意要可追溯。",
+        steps: ["从官网或社媒记录公开号码", "确认国家区号和联系人", "先用邮件/表单建立上下文", "征得同意后添加 WhatsApp", "把聊天要点同步到 CRM"],
+        links: [{ label: "WhatsApp Business", url: "https://www.whatsapp.com/business/" }],
+        tutorials: [
+          {
+            label: "WhatsApp Business 官方入口",
+            url: "https://www.whatsapp.com/business/",
+            kind: "官方",
+            note: "适合管理企业资料、商品目录、快捷回复和标签。",
+          },
+          {
+            label: "WhatsApp 帮助中心",
+            url: "https://faq.whatsapp.com/",
+            kind: "核验",
+            note: "账号、隐私、群发和封号相关规则以官方帮助为准。",
           },
         ],
       },
@@ -370,6 +430,8 @@ export const stages: GuideStage[] = [
     pitfalls: [
       "不要群发无差别开发信，会伤害域名信誉并降低回复率。",
       "不要只找 info@ 邮箱，尽量找到具体岗位或具体姓名。",
+      "不要把 Facebook/TikTok/Instagram 的粉丝数当采购意向，要看公司真实性、近期内容、官网和公开联系方式。",
+      "不要用 WhatsApp 冷启动轰炸陌生客户，先建立上下文并尊重对方同意。",
       "不要忽略小进口商，他们可能比大品牌更容易启动合作。",
     ],
   },

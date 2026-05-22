@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Search, Settings, Trash2, Upload, X } from "lucide-react";
+import { Download, Menu, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
 type Note = {
@@ -241,49 +241,40 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
   return (
     <div className="notes-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <aside className="notes-panel" aria-label="知识库笔记">
-        <div className="notes-header">
-          <div>
-            <span>Local + GitHub Gist</span>
-            <h2>知识库笔记</h2>
+        <header className="notes-header">
+          <div className="notes-title-group">
+            <button type="button" onClick={() => setSettingsOpen((value) => !value)} aria-label="打开笔记工具">
+              <Menu size={19} />
+            </button>
+            <div>
+              <span>Local + GitHub Gist</span>
+              <h2>知识库笔记</h2>
+            </div>
           </div>
           <button type="button" onClick={onClose} aria-label="关闭笔记">
             <X size={20} />
           </button>
-        </div>
-
-        <div className="notes-compose">
-          <textarea
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            placeholder="记录一个外贸知识点、客户开发模板、平台操作提醒..."
-            rows={4}
-          />
-          <div className="notes-row">
-            <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="标签，用逗号分隔" />
-            <button type="button" onClick={addNote}>
-              添加笔记
-            </button>
-          </div>
-        </div>
-
-        <div className="notes-tools">
-          <button type="button" onClick={() => setSettingsOpen((value) => !value)}>
-            <Settings size={16} />
-            Gist 同步设置
-          </button>
-          <button type="button" onClick={exportNotes}>
-            <Download size={16} />
-            导出
-          </button>
-          <label>
-            <Upload size={16} />
-            导入
-            <input type="file" accept="application/json,.json" onChange={importNotes} />
-          </label>
-        </div>
+        </header>
 
         {settingsOpen ? (
-          <div className="gist-settings">
+          <aside className="notes-menu" aria-label="笔记工具">
+            <header className="notes-menu-head">
+              <span>笔记工具</span>
+              <button type="button" onClick={() => setSettingsOpen(false)} aria-label="关闭笔记工具">
+                <X size={16} />
+              </button>
+            </header>
+            <div className="notes-menu-actions">
+              <button type="button" onClick={exportNotes}>
+                <Download size={16} />
+                导出
+              </button>
+              <label>
+                <Upload size={16} />
+                导入
+                <input type="file" accept="application/json,.json" onChange={importNotes} />
+              </label>
+            </div>
             <label>
               GitHub Personal Access Token
               <input
@@ -298,9 +289,9 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
               <input value={gistId} onChange={(event) => setGistId(event.target.value)} placeholder="留空则自动创建或查找" />
             </label>
             <button type="button" onClick={syncNotes} disabled={syncing}>
-              {syncing ? "同步中..." : "保存并同步"}
+              {syncing ? "同步中…" : "保存并同步"}
             </button>
-          </div>
+          </aside>
         ) : null}
 
         <label className="note-search">
@@ -308,12 +299,11 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索笔记内容或标签" />
         </label>
 
-        <div className="note-status">
-          <span>{filteredNotes.length} 条笔记</span>
-          <span>{status}</span>
-        </div>
-
         <div className="note-list">
+          <div className="note-status">
+            <span>{filteredNotes.length} 条笔记</span>
+            <span>{status}</span>
+          </div>
           {filteredNotes.length === 0 ? (
             <div className="note-empty">还没有匹配笔记。</div>
           ) : (
@@ -332,6 +322,19 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
               </article>
             ))
           )}
+        </div>
+
+        <div className="notes-composer">
+          <textarea
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="记录一个知识点、模板或操作提醒…"
+            rows={2}
+          />
+          <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="标签，用逗号分隔" />
+          <button type="button" onClick={addNote} aria-label="添加笔记" disabled={!content.trim()}>
+            <Plus size={19} />
+          </button>
         </div>
       </aside>
     </div>

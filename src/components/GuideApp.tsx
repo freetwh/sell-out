@@ -1,23 +1,26 @@
 "use client";
 
 import {
+  AlertTriangle,
   BookOpen,
+  Bot,
+  CheckCircle2,
   ChevronRight,
   ExternalLink,
-  Filter,
   GraduationCap,
   Layers,
   NotebookPen,
   Search,
-  ShieldCheck,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { decisionRows, officialSources, stages, trendSignals, type GuideStage, type GuideTool } from "@/data/guide";
+import type { ReactNode } from "react";
+import { decisionRows, officialSources, stages, type GuideStage, type GuideTool } from "@/data/guide";
 import { AiAskLayer } from "@/components/AiAskLayer";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 import { NotesPanel } from "@/components/NotesPanel";
+import { TermText } from "@/components/TermText";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -34,6 +37,7 @@ function stageMatches(stage: GuideStage, query: string) {
       stage.tags.join(" "),
       stage.knowledge.join(" "),
       stage.pitfalls.join(" "),
+      stage.beginnerPath?.join(" ") || "",
       stage.tools
         .map((tool) => [tool.name, tool.category, tool.description, tool.bestFor, tool.steps.join(" ")].join(" "))
         .join(" "),
@@ -42,243 +46,243 @@ function stageMatches(stage: GuideStage, query: string) {
   return haystack.includes(query);
 }
 
+function openAi(text = "请基于当前外贸操作地图，帮我拆解下一步行动。") {
+  window.dispatchEvent(new CustomEvent("sell-out-open-ai", { detail: { text } }));
+}
+
+function scrollWorkspaceToTop() {
+  const workspace = document.getElementById("workspace");
+  const topbar = document.querySelector<HTMLElement>(".topbar");
+  if (!workspace) return;
+
+  const topbarHeight = topbar?.offsetHeight || 0;
+  const targetTop = workspace.getBoundingClientRect().top + window.scrollY - topbarHeight - 12;
+  window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+}
+
 export function GuideApp() {
   const [query, setQuery] = useState("");
-  const [activeTag, setActiveTag] = useState("全部");
+  const [activeStageId, setActiveStageId] = useState(stages[0]?.id || "");
   const [notesOpen, setNotesOpen] = useState(false);
   const [tutorialTool, setTutorialTool] = useState<GuideTool | null>(null);
+  const [matrixOpen, setMatrixOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [mobileStageOpen, setMobileStageOpen] = useState(false);
 
-  const tags = useMemo(() => ["全部", ...Array.from(new Set(stages.flatMap((stage) => stage.tags)))], []);
+  const activeStage = stages.find((stage) => stage.id === activeStageId) || stages[0];
   const normalizedQuery = normalize(query);
-  const filteredStages = useMemo(() => {
-    return stages.filter((stage) => {
-      const tagOk = activeTag === "全部" || stage.tags.includes(activeTag);
-      return tagOk && stageMatches(stage, normalizedQuery);
-    });
-  }, [activeTag, normalizedQuery]);
+  const filteredStages = useMemo(() => stages.filter((stage) => stageMatches(stage, normalizedQuery)), [normalizedQuery]);
+
+  function chooseStage(id: string) {
+    setActiveStageId(id);
+    setMobileStageOpen(false);
+    scrollWorkspaceToTop();
+  }
 
   return (
-    <main>
-      <TopNav />
-      <section className="hero-shell" id="top">
-        <div className="hero-kicker">
-          <Sparkles size={16} />
-          2026 B2B Export Growth Playbook
-        </div>
-        <h1>外贸技能知识指引：从找客户到复购的一张操作地图</h1>
-        <p className="hero-copy">
-          面向中国工厂和贸易公司，把平台店、社媒、官网、开发信、报价、收款、发货和售后串成一套可执行流程。每个环节都配流程图、关键知识点、工具入口和新手步骤。
-        </p>
-        <div className="hero-actions">
-          <a href="#platform" className="primary-action">
-            先判断要不要开平台店
-            <ChevronRight size={18} />
-          </a>
-          <button className="secondary-action" type="button" onClick={() => setNotesOpen(true)}>
+    <TooltipProvider>
+    <main className="app-shell">
+      <header className="topbar">
+        <a href="#top" className="brand-mark" aria-label="外贸入门指引首页">
+          <Layers size={19} />
+          <span>外贸入门指引</span>
+        </a>
+        <label className="top-search">
+          <Search size={17} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索工具、流程、风险或平台…" />
+        </label>
+        <div className="top-actions">
+          <button type="button" className="icon-action" onClick={() => openAi()} aria-label="打开 AI 咨询">
+            <Bot size={18} />
+          </button>
+          <button type="button" className="icon-action" onClick={() => setNotesOpen(true)} aria-label="打开知识库笔记">
             <NotebookPen size={18} />
-            打开知识库笔记
           </button>
         </div>
-      </section>
+      </header>
 
-      <section className="control-panel" aria-label="搜索和筛选">
-        <label className="search-box">
-          <Search size={18} />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="搜索：Facebook、开发信、PI、Payoneer、DDP、售后..."
-          />
-        </label>
-        <div className="tag-strip" aria-label="标签筛选">
-          <Filter size={16} />
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className={tag === activeTag ? "tag-chip active" : "tag-chip"}
-              onClick={() => setActiveTag(tag)}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="trend-board" id="trends">
-        <div>
-          <span className="section-eyebrow">What changed</span>
-          <h2>2026 外贸获客的底层变化</h2>
-        </div>
-        <div className="trend-grid">
-          {trendSignals.map((signal, index) => (
-            <article key={signal} className="trend-card">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <p>{signal}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <DecisionMatrix />
-
-      <section className="stage-list" aria-label="外贸业务环节">
-        {filteredStages.length === 0 ? (
-          <div className="empty-state">
-            <BookOpen size={28} />
-            <p>没有匹配结果，换个关键词试试。</p>
+      <div className="workspace-shell" id="workspace">
+        {mobileStageOpen ? <button type="button" className="mobile-stage-backdrop" aria-label="关闭章节导航" onClick={() => setMobileStageOpen(false)} /> : null}
+        <aside className={mobileStageOpen ? "process-rail mobile-open" : "process-rail"} aria-label="外贸流程导航">
+          <div className="rail-heading">
+            <span>流程导航</span>
+            <strong>从获客到复购</strong>
           </div>
-        ) : (
-          filteredStages.map((stage) => <StageSection key={stage.id} stage={stage} onOpenTutorial={setTutorialTool} />)
-        )}
-      </section>
+          <nav className="stage-nav">
+            {stages.map((stage) => (
+              <button
+                key={stage.id}
+                type="button"
+                className={stage.id === activeStage.id ? "stage-nav-item active" : "stage-nav-item"}
+                onClick={() => chooseStage(stage.id)}
+              >
+                <span>{stage.index}</span>
+                <div>
+                  <strong>{stage.title}</strong>
+                  <small>{stage.subtitle}</small>
+                </div>
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      <section className="sources-panel" id="sources">
-        <div>
-          <span className="section-eyebrow">Official links</span>
-          <h2>官方入口和可核验资料</h2>
-          <p>平台规则、注册入口和费用可能变化，实操前优先以官方页面为准。</p>
-        </div>
-        <div className="source-links">
-          {officialSources.map((source) => (
-            <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
-              {source.label}
-              <ExternalLink size={15} />
-            </a>
-          ))}
-        </div>
-      </section>
+        <section className="workspace-main" id="top">
+          {normalizedQuery ? (
+            <SearchResults stages={filteredStages} onChooseStage={chooseStage} />
+          ) : (
+            <>
+              <StageWorkspace stage={activeStage} onOpenTutorial={setTutorialTool} />
 
-      <footer>
-        本站为外贸操作知识导航，不构成法律、税务、金融或合规意见。涉及制裁、认证、税务、危险品、儿童用品、医疗、食品接触材料等场景，应咨询专业机构并核验目标市场要求。
-      </footer>
+              <DisclosurePanel title="平台与渠道决策矩阵" eyebrow="决策矩阵" open={matrixOpen} onToggle={() => setMatrixOpen((value) => !value)}>
+                <DecisionMatrix />
+              </DisclosurePanel>
 
+              <DisclosurePanel title="官方入口和可核验资料" eyebrow="官方资料" open={sourcesOpen} onToggle={() => setSourcesOpen((value) => !value)}>
+                <SourceLinks />
+              </DisclosurePanel>
+            </>
+          )}
+        </section>
+
+      </div>
+
+      <nav className="mobile-bottom-nav" aria-label="移动端快捷导航">
+        <button type="button" className={mobileStageOpen ? "active" : ""} onClick={() => setMobileStageOpen((value) => !value)} aria-expanded={mobileStageOpen}>
+          <BookOpen size={18} />
+          章节
+        </button>
+        <button type="button" onClick={() => document.querySelector(".top-search input") instanceof HTMLInputElement && document.querySelector<HTMLInputElement>(".top-search input")?.focus()}>
+          <Search size={18} />
+          搜索
+        </button>
+        <button type="button" onClick={() => openAi(activeStage.summary)}>
+          <Bot size={18} />
+          AI
+        </button>
+      </nav>
+
+      <button className="floating-ai" type="button" onClick={() => openAi(activeStage.summary)} aria-label="打开 AI 咨询" data-tooltip="有问题直接问，划线可提问">
+        <Bot size={20} />
+      </button>
       <button className="floating-notes" type="button" onClick={() => setNotesOpen(true)} aria-label="打开悬浮知识库笔记">
         <NotebookPen size={20} />
-        笔记
       </button>
       <TutorialDialog tool={tutorialTool} onClose={() => setTutorialTool(null)} />
       <NotesPanel open={notesOpen} onClose={() => setNotesOpen(false)} />
       <AiAskLayer />
     </main>
+    </TooltipProvider>
   );
 }
 
-function TopNav() {
+function SearchResults({ stages: results, onChooseStage }: { stages: GuideStage[]; onChooseStage: (id: string) => void }) {
   return (
-    <nav className="top-nav">
-      <a href="#top" className="brand-mark">
-        <Layers size={18} />
-        Sell Out Guide
-      </a>
-      <div className="nav-scroll">
-        <a href="#trends">趋势</a>
-        <a href="#matrix">平台决策</a>
-        {stages.map((stage) => (
-          <a key={stage.id} href={`#${stage.id}`}>
-            {stage.index} {stage.title}
-          </a>
-        ))}
-        <a href="#sources">官方链接</a>
-      </div>
-    </nav>
-  );
-}
-
-function DecisionMatrix() {
-  return (
-    <section className="matrix-panel" id="matrix">
+    <section className="search-results" aria-label="搜索结果">
       <div className="section-heading">
-        <span className="section-eyebrow">Decision matrix</span>
-        <h2>是否要开平台店：先看渠道角色</h2>
-        <p>平台店适合承接采购意图，但不是万能答案。先看产品、团队、预算和客户资产沉淀方式。</p>
+        <h2>匹配章节</h2>
       </div>
-      <div className="matrix-table" role="table" aria-label="外贸渠道决策矩阵">
-        <div className="matrix-row matrix-head" role="row">
-          <span>渠道</span>
-          <span>适合</span>
-          <span>投入</span>
-          <span>优势</span>
-          <span>风险</span>
-          <span>第一步</span>
+      {results.length === 0 ? (
+        <div className="empty-state">
+          <BookOpen size={24} />
+          <p>没有匹配结果，换个关键词试试。</p>
         </div>
-        {decisionRows.map((row) => (
-          <div className="matrix-row" role="row" key={row.channel}>
-            <strong>{row.channel}</strong>
-            <span>{row.fit}</span>
-            <span>{row.investment}</span>
-            <span>{row.strengths}</span>
-            <span>{row.risks}</span>
-            <span>{row.firstMove}</span>
-          </div>
-        ))}
-      </div>
+      ) : (
+        <div className="result-grid">
+          {results.map((stage) => (
+            <button key={stage.id} type="button" className="result-card" onClick={() => onChooseStage(stage.id)}>
+              <span>{stage.index}</span>
+              <strong>{stage.title}</strong>
+              <p>{stage.summary}</p>
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
-function StageSection({ stage, onOpenTutorial }: { stage: GuideStage; onOpenTutorial: (tool: GuideTool) => void }) {
+function StageWorkspace({
+  stage,
+  onOpenTutorial,
+}: {
+  stage: GuideStage;
+  onOpenTutorial: (tool: GuideTool) => void;
+}) {
+  const firstSteps = stage.beginnerPath?.slice(0, 3) || stage.knowledge.slice(0, 3);
+  const checkPoints = stage.knowledge.slice(0, 4);
+
   return (
-    <section className="stage-section" id={stage.id}>
-      <div className="stage-header">
+    <section className="stage-workspace" aria-labelledby={`${stage.id}-title`}>
+      <div className="stage-title-row">
         <div>
           <span className="stage-index">{stage.index}</span>
-          <h2>{stage.title}</h2>
-          <p>{stage.subtitle}</p>
+          <h2 id={`${stage.id}-title`}><TermText>{stage.title}</TermText></h2>
+          <p><TermText>{stage.subtitle}</TermText></p>
         </div>
-        <div className="stage-tags">
-          {stage.tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </div>
+        <button type="button" className="ghost-action" onClick={() => openAi(stage.summary)}>
+          <Bot size={17} />
+          问这一章
+        </button>
       </div>
 
-      <p className="stage-summary">{stage.summary}</p>
+      <article className="stage-summary-panel">
+        <strong>结论</strong>
+        <p><TermText>{stage.summary}</TermText></p>
+      </article>
 
-      <div className="stage-grid">
-        <article className="diagram-card">
+      <div className="stage-detail-grid">
+        <article className="action-panel">
           <div className="card-heading">
-            <ShieldCheck size={18} />
-            <h3>{stage.diagramTitle}</h3>
+            <GraduationCap size={18} />
+            <h3>3 步开始</h3>
           </div>
-          <MermaidDiagram chart={stage.diagram} />
+          <ol>
+            {firstSteps.map((item) => (
+              <li key={item}><TermText>{item}</TermText></li>
+            ))}
+          </ol>
         </article>
 
-        <article className="knowledge-card">
-          <h3>关键知识点</h3>
+        <article className="action-panel">
+          <div className="card-heading">
+            <CheckCircle2 size={18} />
+            <h3>关键检查点</h3>
+          </div>
           <ul>
-            {stage.knowledge.map((item) => (
-              <li key={item}>{item}</li>
+            {checkPoints.map((item) => (
+              <li key={item}><TermText>{item}</TermText></li>
             ))}
           </ul>
         </article>
       </div>
 
-      {stage.beginnerPath?.length ? (
-        <article className="beginner-card">
-          <div className="card-heading">
-            <GraduationCap size={18} />
-            <h3>小白从这里开始</h3>
-          </div>
-          <ol>
-            {stage.beginnerPath.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ol>
-        </article>
-      ) : null}
+      <article className="diagram-panel">
+        <div className="card-heading">
+          <Layers size={18} />
+          <h3>{stage.diagramTitle}</h3>
+        </div>
+        <MermaidDiagram chart={stage.diagram} />
+      </article>
 
-      <div className="tool-grid">
-        {stage.tools.map((tool) => (
-          <ToolCard key={`${stage.id}-${tool.name}`} tool={tool} onOpenTutorial={onOpenTutorial} />
-        ))}
-      </div>
+      <section className="tool-section">
+        <div className="compact-section-heading">
+          <h3>工具与入口</h3>
+        </div>
+        <div className="tool-list">
+          {stage.tools.map((tool) => (
+            <ToolCard key={`${stage.id}-${tool.name}`} tool={tool} onOpenTutorial={onOpenTutorial} />
+          ))}
+        </div>
+      </section>
 
       <article className="pitfall-card">
-        <h3>常见坑</h3>
+        <div className="card-heading">
+          <AlertTriangle size={18} />
+          <h3>常见坑</h3>
+        </div>
         <div>
           {stage.pitfalls.map((pitfall) => (
-            <span key={pitfall}>{pitfall}</span>
+            <span key={pitfall}><TermText>{pitfall}</TermText></span>
           ))}
         </div>
       </article>
@@ -291,44 +295,96 @@ function ToolCard({ tool, onOpenTutorial }: { tool: GuideTool; onOpenTutorial: (
     <article className="tool-card">
       <div className="tool-top">
         <div>
-          <span>{tool.category}</span>
-          <h3>{tool.name}</h3>
+          <span><TermText>{tool.category}</TermText></span>
+          <h3><TermText>{tool.name}</TermText></h3>
         </div>
-        <div className="tool-links">
-          {tool.links.map((link) => (
-            <a key={link.url} href={link.url} target="_blank" rel="noreferrer" title={link.label}>
-              <ExternalLink size={16} />
-            </a>
-          ))}
-        </div>
+        <a href={tool.links[0]?.url || "#"} target="_blank" rel="noreferrer" aria-label={`打开 ${tool.name}`}>
+          <ExternalLink size={16} />
+        </a>
       </div>
-      <p>{tool.description}</p>
-      {tool.difficulty ? (
-        <div className="difficulty-note">
-          <span>难点</span>
-          {tool.difficulty}
-        </div>
-      ) : null}
-      <div className="best-for">{tool.bestFor}</div>
-      <ol>
-        {tool.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-      <div className="text-links">
+      <p><TermText>{tool.description}</TermText></p>
+      <div className="tool-meta">
+        <span><TermText>{tool.difficulty || "按步骤执行"}</TermText></span>
+      </div>
+      <div className="tool-actions">
         {tool.tutorials?.length ? (
-          <button type="button" className="tutorial-button" onClick={() => onOpenTutorial(tool)}>
+          <button type="button" onClick={() => onOpenTutorial(tool)}>
             <GraduationCap size={15} />
             教程
           </button>
         ) : null}
-        {tool.links.map((link) => (
+        {tool.links.slice(1).map((link) => (
           <a key={link.url} href={link.url} target="_blank" rel="noreferrer">
             {link.label}
           </a>
         ))}
       </div>
     </article>
+  );
+}
+
+function DisclosurePanel({
+  title,
+  eyebrow,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  eyebrow: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section className="disclosure-panel">
+      <button type="button" className="section-toggle" onClick={onToggle} aria-expanded={open}>
+        <span>
+          <span className="section-eyebrow">{eyebrow}</span>
+          <strong>{title}</strong>
+        </span>
+        <ChevronRight size={18} />
+      </button>
+      {open ? <div className="disclosure-content">{children}</div> : null}
+    </section>
+  );
+}
+
+function DecisionMatrix() {
+  return (
+    <div className="matrix-table" role="table" aria-label="外贸渠道决策矩阵">
+      <div className="matrix-row matrix-head" role="row">
+        <span>渠道</span>
+        <span>适合</span>
+        <span>投入</span>
+        <span>优势</span>
+        <span>风险</span>
+        <span>第一步</span>
+      </div>
+      {decisionRows.map((row) => (
+        <div className="matrix-row" role="row" key={row.channel}>
+          <strong><TermText>{row.channel}</TermText></strong>
+          <span><TermText>{row.fit}</TermText></span>
+          <span><TermText>{row.investment}</TermText></span>
+          <span><TermText>{row.strengths}</TermText></span>
+          <span><TermText>{row.risks}</TermText></span>
+          <span><TermText>{row.firstMove}</TermText></span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SourceLinks() {
+  return (
+    <div className="source-links">
+      {officialSources.map((source) => (
+        <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+          {source.label}
+          <ExternalLink size={15} />
+        </a>
+      ))}
+    </div>
   );
 }
 
