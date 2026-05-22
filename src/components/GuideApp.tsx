@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { decisionRows, officialSources, stages, trendSignals, type GuideStage, type GuideTool } from "@/data/guide";
+import { AiAskLayer } from "@/components/AiAskLayer";
 import { MermaidDiagram } from "@/components/MermaidDiagram";
 import { NotesPanel } from "@/components/NotesPanel";
 
@@ -158,6 +159,7 @@ export function GuideApp() {
       </button>
       <TutorialDialog tool={tutorialTool} onClose={() => setTutorialTool(null)} />
       <NotesPanel open={notesOpen} onClose={() => setNotesOpen(false)} />
+      <AiAskLayer />
     </main>
   );
 }

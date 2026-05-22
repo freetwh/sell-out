@@ -69,6 +69,25 @@ export function NotesPanel({ open, onClose }: NotesPanelProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    const onAddNote = (event: Event) => {
+      const detail = (event as CustomEvent<{ content?: string; tags?: string[] }>).detail;
+      if (!detail?.content?.trim()) return;
+      persist([
+        {
+          id: makeId(),
+          content: detail.content.trim(),
+          tags: Array.isArray(detail.tags) ? detail.tags : [],
+          createdAt: new Date().toISOString(),
+        },
+        ...notes,
+      ]);
+      setStatus("AI 问答已写入本地笔记，可用 Gist 同步。");
+    };
+    window.addEventListener("sell-out-add-note", onAddNote);
+    return () => window.removeEventListener("sell-out-add-note", onAddNote);
+  }, [notes]);
+
   const filteredNotes = useMemo(() => {
     const normalized = query.toLowerCase().trim();
     if (!normalized) return notes;
