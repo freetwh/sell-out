@@ -5,11 +5,13 @@ import {
   ChevronRight,
   ExternalLink,
   Filter,
+  GraduationCap,
   Layers,
   NotebookPen,
   Search,
   ShieldCheck,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { decisionRows, officialSources, stages, trendSignals, type GuideStage, type GuideTool } from "@/data/guide";
@@ -43,6 +45,7 @@ export function GuideApp() {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState("全部");
   const [notesOpen, setNotesOpen] = useState(false);
+  const [tutorialTool, setTutorialTool] = useState<GuideTool | null>(null);
 
   const tags = useMemo(() => ["全部", ...Array.from(new Set(stages.flatMap((stage) => stage.tags)))], []);
   const normalizedQuery = normalize(query);
@@ -125,7 +128,7 @@ export function GuideApp() {
             <p>没有匹配结果，换个关键词试试。</p>
           </div>
         ) : (
-          filteredStages.map((stage) => <StageSection key={stage.id} stage={stage} />)
+          filteredStages.map((stage) => <StageSection key={stage.id} stage={stage} onOpenTutorial={setTutorialTool} />)
         )}
       </section>
 
@@ -153,6 +156,7 @@ export function GuideApp() {
         <NotebookPen size={20} />
         笔记
       </button>
+      <TutorialDialog tool={tutorialTool} onClose={() => setTutorialTool(null)} />
       <NotesPanel open={notesOpen} onClose={() => setNotesOpen(false)} />
     </main>
   );
@@ -211,7 +215,7 @@ function DecisionMatrix() {
   );
 }
 
-function StageSection({ stage }: { stage: GuideStage }) {
+function StageSection({ stage, onOpenTutorial }: { stage: GuideStage; onOpenTutorial: (tool: GuideTool) => void }) {
   return (
     <section className="stage-section" id={stage.id}>
       <div className="stage-header">
@@ -248,9 +252,23 @@ function StageSection({ stage }: { stage: GuideStage }) {
         </article>
       </div>
 
+      {stage.beginnerPath?.length ? (
+        <article className="beginner-card">
+          <div className="card-heading">
+            <GraduationCap size={18} />
+            <h3>小白从这里开始</h3>
+          </div>
+          <ol>
+            {stage.beginnerPath.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ol>
+        </article>
+      ) : null}
+
       <div className="tool-grid">
         {stage.tools.map((tool) => (
-          <ToolCard key={`${stage.id}-${tool.name}`} tool={tool} />
+          <ToolCard key={`${stage.id}-${tool.name}`} tool={tool} onOpenTutorial={onOpenTutorial} />
         ))}
       </div>
 
@@ -266,7 +284,7 @@ function StageSection({ stage }: { stage: GuideStage }) {
   );
 }
 
-function ToolCard({ tool }: { tool: GuideTool }) {
+function ToolCard({ tool, onOpenTutorial }: { tool: GuideTool; onOpenTutorial: (tool: GuideTool) => void }) {
   return (
     <article className="tool-card">
       <div className="tool-top">
@@ -283,6 +301,12 @@ function ToolCard({ tool }: { tool: GuideTool }) {
         </div>
       </div>
       <p>{tool.description}</p>
+      {tool.difficulty ? (
+        <div className="difficulty-note">
+          <span>难点</span>
+          {tool.difficulty}
+        </div>
+      ) : null}
       <div className="best-for">{tool.bestFor}</div>
       <ol>
         {tool.steps.map((step) => (
@@ -290,6 +314,12 @@ function ToolCard({ tool }: { tool: GuideTool }) {
         ))}
       </ol>
       <div className="text-links">
+        {tool.tutorials?.length ? (
+          <button type="button" className="tutorial-button" onClick={() => onOpenTutorial(tool)}>
+            <GraduationCap size={15} />
+            教程
+          </button>
+        ) : null}
         {tool.links.map((link) => (
           <a key={link.url} href={link.url} target="_blank" rel="noreferrer">
             {link.label}
@@ -297,5 +327,55 @@ function ToolCard({ tool }: { tool: GuideTool }) {
         ))}
       </div>
     </article>
+  );
+}
+
+function TutorialDialog({ tool, onClose }: { tool: GuideTool | null; onClose: () => void }) {
+  if (!tool) return null;
+
+  return (
+    <div className="tutorial-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <aside className="tutorial-dialog" aria-label={`${tool.name} 教程`}>
+        <div className="tutorial-header">
+          <div>
+            <span>{tool.category}</span>
+            <h2>{tool.name} 教程</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="关闭教程">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="tutorial-difficulty">
+          <strong>新手难点</strong>
+          <p>{tool.difficulty || "按页面步骤操作，遇到规则、费用或审核问题时优先查官方资料。"}</p>
+        </div>
+
+        <div className="tutorial-section">
+          <h3>先照这个顺序做</h3>
+          <ol>
+            {tool.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="tutorial-section">
+          <h3>靠谱教程和核验入口</h3>
+          <div className="tutorial-links">
+            {(tool.tutorials || tool.links.map((link) => ({ ...link, kind: "官方" as const, note: "以该页面的最新说明为准。" }))).map(
+              (link) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noreferrer">
+                  <span>{link.kind}</span>
+                  <strong>{link.label}</strong>
+                  <p>{link.note}</p>
+                  <ExternalLink size={16} />
+                </a>
+              ),
+            )}
+          </div>
+        </div>
+      </aside>
+    </div>
   );
 }

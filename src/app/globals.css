@@ -288,6 +288,7 @@ h1 {
 .knowledge-card,
 .diagram-card,
 .tool-card,
+.beginner-card,
 .pitfall-card,
 .sources-panel,
 .matrix-panel {
@@ -428,6 +429,7 @@ h1 {
 .diagram-card,
 .knowledge-card,
 .tool-card,
+.beginner-card,
 .pitfall-card {
   padding: 18px;
 }
@@ -462,16 +464,24 @@ h1 {
 }
 
 .knowledge-card ul,
-.tool-card ol {
+.tool-card ol,
+.beginner-card ol,
+.tutorial-section ol {
   margin: 0;
   padding-left: 20px;
 }
 
 .knowledge-card li,
-.tool-card li {
+.tool-card li,
+.beginner-card li,
+.tutorial-section li {
   color: #42524d;
   line-height: 1.75;
   margin-bottom: 8px;
+}
+
+.beginner-card {
+  margin-top: 14px;
 }
 
 .tool-grid {
@@ -530,6 +540,23 @@ h1 {
   padding: 10px;
 }
 
+.difficulty-note {
+  background: rgba(181, 128, 44, 0.1);
+  border: 1px solid rgba(181, 128, 44, 0.2);
+  border-radius: 8px;
+  color: #5f4721;
+  line-height: 1.65;
+  padding: 10px;
+}
+
+.difficulty-note span {
+  color: var(--gold);
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 3px;
+}
+
 .text-links {
   display: flex;
   flex-wrap: wrap;
@@ -538,6 +565,7 @@ h1 {
 }
 
 .text-links a,
+.tutorial-button,
 .source-links a {
   align-items: center;
   background: #fff;
@@ -547,6 +575,11 @@ h1 {
   display: inline-flex;
   gap: 6px;
   padding: 8px 11px;
+}
+
+.tutorial-button {
+  background: var(--green-dark);
+  color: white;
 }
 
 .pitfall-card {
@@ -633,6 +666,124 @@ footer {
   padding: 18px;
   position: fixed;
   z-index: 80;
+}
+
+.tutorial-overlay {
+  align-items: center;
+  background: rgba(13, 20, 18, 0.62);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 18px;
+  position: fixed;
+  z-index: 90;
+}
+
+.tutorial-dialog {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+  display: grid;
+  gap: 16px;
+  max-height: min(760px, calc(100vh - 36px));
+  max-width: 760px;
+  overflow: auto;
+  padding: 18px;
+  width: min(100%, 760px);
+}
+
+.tutorial-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.tutorial-header span {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutorial-header h2 {
+  color: var(--green-dark);
+  font-size: clamp(24px, 4vw, 34px);
+  line-height: 1.18;
+  margin-top: 4px;
+}
+
+.tutorial-header button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--green-dark);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.tutorial-difficulty,
+.tutorial-section {
+  background: #fff7e8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.tutorial-difficulty strong,
+.tutorial-section h3 {
+  color: var(--green-dark);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.tutorial-difficulty p {
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.tutorial-links {
+  display: grid;
+  gap: 10px;
+}
+
+.tutorial-links a {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  display: grid;
+  gap: 5px;
+  grid-template-columns: 1fr auto;
+  padding: 12px;
+}
+
+.tutorial-links a span,
+.tutorial-links a strong,
+.tutorial-links a p {
+  grid-column: 1;
+}
+
+.tutorial-links a svg {
+  color: var(--green-dark);
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  margin-top: 4px;
+}
+
+.tutorial-links a span {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tutorial-links a p {
+  color: var(--muted);
+  line-height: 1.65;
 }
 
 .notes-panel {
